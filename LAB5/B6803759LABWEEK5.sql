@@ -83,3 +83,48 @@ GO
 
 EXEC sp_helpindex orders;
 SELECT * FROM dep;
+
+
+select depno,depname,location
+from dep d
+where  not EXISTS(
+select depno from employee e
+where e.depno =d.depno
+)
+
+select empname,salary,position, projno ,hours
+from employee e,projwork p
+where e.empnum = p.empnum
+
+select TOP(3)empname,salary,position, projno 
+from employee e,projwork p
+where e.empnum = p.empnum Order by hours desc 
+
+SELECT e.empname, e.position,e.salary,d.depname,d.location
+from employee e,dep d
+where e.salary > (select avg (salary) from employee where position='clerk')
+And d.depname!='marketing'
+and e.depno = d.depno
+
+select empname,salary,position, projno ,hours
+from employee e,projwork p
+where e.empnum = p.empnum
+from employee e,projwork p
+WHERE NOT EXISTS
+SELECT AVG (salary) as 'average of salary'
+FROM employee
+
+SELECT e.empname, e.position,e.salary,d.depname,d.location
+from employee e,dep d
+where e.salary > (select avg (salary) from employee where position='clerk')
+And d.depname!='marketing'
+and e.depno = d.depno
+
+select * from employee 
+select * from dep
+
+select depno from employee e
+where e.depno =d.depno
+)
+
+
