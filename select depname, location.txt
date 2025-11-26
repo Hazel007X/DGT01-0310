@@ -1,0 +1,18 @@
+select depname, location
+from dep as d 
+where d.depno in (SELECT depno
+FROM EMPLOYEE
+where salary>(select max (Salary) 
+from employee 
+where position = 'clerk' 
+and depno = (select depno From dep where depname = 'Accounting')))
+
+select depname, location
+from dep
+where depno in 
+(SELECT depno FROM EMPLOYEE where salary>30000 and empnum in ( select empnum from projwork ));
+
+select * from dep
+select * from employee
+select * from projwork
+select * from project
