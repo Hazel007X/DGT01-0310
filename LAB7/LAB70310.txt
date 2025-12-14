@@ -1,80 +1,83 @@
-CREATE TABLE employee (
-    empnum   CHAR(4)       PRIMARY KEY, 
-    empname  VARCHAR(15)   NOT NULL,    
-    hiredate DATE          NOT NULL,    
-    salary   MONEY         NOT NULL,    
-    position VARCHAR(15)   NOT NULL,    
-    depno    CHAR(2)       NOT NULL,    
-    FOREIGN KEY (depno) REFERENCES dep(depno)
-);
-GO
-INSERT INTO dep VALUES ('10', 'accounting', 'silom');
-INSERT INTO dep VALUES ('20', 'administration', 'sukumvit');
-INSERT INTO dep VALUES ('30', 'marketing', 'ratchada');
-INSERT INTO dep VALUES ('40', 'finance', 'silom'); 
-GO
 
-INSERT INTO employee VALUES ('1001', 'Anya', '1992-06-12', 15000, 'clerk', '10');
-INSERT INTO employee VALUES ('1002', 'Amon', '1991-03-15', 25000, 'clerk', '10');
-INSERT INTO employee VALUES ('1003', 'Chana', '1987-07-08', 60000, 'manager', '10');
-INSERT INTO employee VALUES ('2001', 'Darin', '1997-07-20', 27000, 'clerk', '20');
-INSERT INTO employee VALUES ('2002', 'Gavin', '1987-10-10', 55000, 'manager', '20');
-INSERT INTO employee VALUES ('2003', 'Kris', '2002-01-01', 30000, 'clerk', '20');
-INSERT INTO employee VALUES ('3001', 'Sandy', '1982-05-05', 70000, 'supervisor', '30');
-INSERT INTO employee VALUES ('3002', 'Tara', '2001-02-01', 22000, 'clerk', '30');
-INSERT INTO employee VALUES ('3003', 'Tisha', '1983-09-10', 90000, 'supervisor', '30');
-INSERT INTO employee VALUES ('8336', 'Yo', '1990-08-16', 50000, 'manager', '40');
-INSERT INTO employee VALUES ('5002', 'Naruepon', '2024-12-15', 25000, 'clerk', '40'); 
-GO
+USE dbEmployee3759;
+DROP PROCEDURE IF EXISTS sp_GetEmployeesByLocation;
+DROP PROCEDURE IF EXISTS sp_GetEmployeesByAVG;
+DROP TRIGGER IF EXISTS trg_show_new_employee;
+DROP TABLE IF EXISTS dbo.employee;
+DROP TABLE IF EXISTS dbo.dep;
+CREATE TABLE dbo.dep (
+    depno CHAR(2) PRIMARY KEY,
+    depname VARCHAR(20) NOT NULL,
+    location VARCHAR(15) NOT NULL
+);
+
+CREATE TABLE dbo.employee (
+    empnum CHAR(4) PRIMARY KEY,
+    empname VARCHAR(15) NOT NULL,
+    hiredate DATE,
+    salary INT,
+    position VARCHAR(10),
+    depno CHAR(2) REFERENCES dbo.dep(depno)
+);
+
+INSERT INTO dbo.dep (depno, depname, location) VALUES
+('10', 'accounting', 'silom'),
+('20', 'administration', 'sukumvit'),
+('30', 'marketing', 'ratchada'),
+('40', 'finance', 'silom');
+
+INSERT INTO dbo.employee (empnum, empname, hiredate, salary, position, depno) VALUES
+('1001', 'Anya', '1992-06-12', 15000, 'clerk', '10'),
+('1002', 'Amon', '1991-03-15', 25000, 'clerk', '10'),
+('1003', 'Chana', '1987-07-08', 60000, 'manager', '10'),
+('2001', 'Darin', '1997-07-20', 27000, 'clerk', '20'),
+('2002', 'Gavin', '1987-10-10', 55000, 'manager', '20'),
+('2003', 'Kris', '2002-01-01', 30000, 'clerk', '20'),
+('3001', 'Sandy', '1982-05-05', 70000, 'supervisor', '30'),
+('3002', 'Tara', '2001-02-01', 22000, 'clerk', '30'),
+('3003', 'Tisha', '1983-09-10', 90000, 'supervisor', '30'),
+('8336', 'Yo', '1990-08-16', 50000, 'manager', '40');
+
+DROP PROCEDURE IF EXISTS sp_GetEmployeesByLocation;
 
 CREATE PROCEDURE sp_GetEmployeesByLocation
-    @location VARCHAR(50) 
-AS
-BEGIN
-    SELECT
-        e.empnum,
-        e.empname,
-        e.salary,
-        e.position,
-        d.depname,
-        d.location
-    FROM employee e
-    INNER JOIN dep d ON e.depno = d.depno 
+    @location VARCHAR(15)
+AS 
+BEGIN 
+    SELECT  
+        e.empnum, 
+        e.empname, 
+        e.salary, 
+        e.position, 
+        d.depname, 
+        d.location 
+    FROM dbo.employee e 
+    INNER JOIN dbo.dep d ON e.depno = d.depno 
     WHERE d.location = @location
-    ORDER BY e.salary DESC; 
-END
-GO
+    ORDER BY e.salary DESC 
+END 
 
-EXEC sp_GetEmployeesByLocation @location = 'silom';
+EXEC sp_GetEmployeesByLocation @location ='silom';
 
 CREATE PROCEDURE sp_GetEmployeesByAVG
-    @location VARCHAR(50) 
+    @location VARCHAR(15)
 AS
 BEGIN
-    SELECT
-        AVG(e.salary) -- คำนวณค่าเฉลี่ย
+    SELECT avg(salary)
     FROM employee e
     INNER JOIN dep d ON e.depno = d.depno
-    WHERE d.location = @location;
+    WHERE location = @location;
 END
-GO
 
+EXEC sp_GetEmployeesByAVG @location ='silom';
 
-
--- ทดสอบ ลายเซ็นที่ 2
-EXEC sp_GetEmployeesByAVG @location = 'silom';
-GO
-
--- สร้าง Trigger trg_show_new_employee
 CREATE TRIGGER trg_show_new_employee
 ON employee 
 AFTER INSERT 
 AS
 BEGIN
-    -- ประกาศตัวแปรเพื่อเก็บข้อมูลจากตาราง 'inserted' [cite: 188]
     DECLARE @empnum CHAR(4), @name VARCHAR(50), @salary MONEY, @position VARCHAR(15), @depno CHAR(2);
 
-    -- ดึงข้อมูลแถวใหม่จากตารางพิเศษ 'inserted' [cite: 188]
     SELECT
         @empnum = empnum,
         @name = empname,
@@ -83,7 +86,6 @@ BEGIN
         @depno = depno
     FROM inserted;
 
-    -- แสดงผลลัพธ์ใน Messages tab
     PRINT 'Add Employee';
     PRINT 'empnum: ' + @empnum;
     PRINT 'Name: ' + @name;
@@ -91,8 +93,8 @@ BEGIN
     PRINT '@position: ' + @position;
     PRINT '@depno: ' + @depno;
 END
-GO
+
 
 INSERT INTO employee (empnum, empname, hiredate, salary, position, depno)
 VALUES ('6002', 'oliver', '2024-12-15', 28000, 'clerk', '20');
-GO
+
